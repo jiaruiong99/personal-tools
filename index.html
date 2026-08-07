@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Malaysia IC PDF Generator</title>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+        <style>
+            body{
+                font-family:Arial;
+                padding:20px;
+            }
+
+            .card{
+                border:1px solid #ddd;
+                padding:15px;
+                max-width:600px;
+                margin-bottom:20px;
+                border-radius:10px;
+            }
+
+
+            canvas{
+                width:100%;
+                border:1px solid #ccc;
+            }
+
+
+            input,select,button{
+                width:100%;
+                padding:10px;
+                margin-top:8px;
+            }
+
+
+            button{
+                background:#0066ff;
+                color:white;
+                border:none;
+                border-radius:8px;
+                font-size:16px;
+            }
+        </style>
+    </head>
+
+    <body>
+        <h2>Malaysia IC PDF Generator</h2>
+        <div class="card">
+            <h3>Front IC</h3>
+            <input type="file" accept="image/*" capture="environment" id="front">
+            <canvas id="frontCanvas"></canvas>
+        </div>
+
+        <div class="card">
+            <h3>Back IC</h3>
+            <input type="file" accept="image/*" capture="environment" id="back">
+            <canvas id="backCanvas"></canvas>
+        </div>
+
+        <div class="card">
+            <h3>Watermark Settings</h3>
+
+            <label>IC Mode</label>
+            <select id="mode">
+                <option value="color">Color</option>
+                <option value="bw">Black & White</option>
+            </select>
+
+            <label>Text</label>
+            <input id="wmText" value="FOR VERIFICATION ONLY">
+
+            <label>Color</label>
+            <input type="color" id="wmColor" value="#808080">
+
+            <label> Opacity </label>
+            <input type="range" id="opacity" min="0.1" max="1" step="0.1" value="0.3">
+
+            <label> Font Size </label>
+            <input type="range" id="fontSize" min="20" max="50" value="50">
+
+            <label> X Position </label>
+            <input type="range" id="wmX" min="0" max="500" value="250">
+
+            <label> Y Position </label>
+            <input type="range" id="wmY" min="0" max="315" value="160">
+
+            <label> Rotation Degree </label>
+            <input type="range" id="wmRotation" min="-180" max="180" value="-30">
+        </div>
+
+
+        <button onclick="generatePDF()">Generate PDF</button>
+
+        <script>
+            let frontImg = null;
+            let backImg = null;
+            let frontCanvas = document.getElementById("frontCanvas");
+            let backCanvas = document.getElementById("backCanvas");
+
+            document.getElementById("front").onchange = function (e) {
+                loadImage(e.target.files[0], (img) => {
+                    frontImg = img;
+                    draw(frontImg, frontCanvas);
+                });
+            };
+
+            document.getElementById("back").onchange = function (e) {
+                loadImage(e.target.files[0], (img) => {
+                    backImg = img;
+                    draw(backImg, backCanvas);
+                });
+            };
+
+            function loadImage(file, callback) {
+                let reader = new FileReader();
+
+                reader.onload = function (e) {
+                    let img = new Image();
+
+                    img.onload = function () {
+                        callback(img);
+                    };
+
+                    img.src = e.target.result;
+                };
+
+                reader.readAsDataURL(file);
+            }
+
+            function draw(img, canvas) {
+                let ctx = canvas.getContext("2d");
+                let scale = 500 / img.width;
+                canvas.width = 500;
+                canvas.height = img.height * scale;
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                applyBlackWhite(canvas);
+                addWatermark(canvas);
+            }
+
+            function applyBlackWhite(canvas) {
+                if (document.getElementById("mode").value != "bw") return;
+
+                let ctx = canvas.getContext("2d");
+                let data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+                for (let i = 0; i < data.data.length; i += 4) {
+                    let avg = (data.data[i] + data.data[i + 1] + data.data[i + 2]) / 3;
+
+                    data.data[i] = avg;
+                    data.data[i + 1] = avg;
+                    data.data[i + 2] = avg;
+                }
+
+                ctx.putImageData(data, 0, 0);
+            }
+
+            function addWatermark(canvas) {
+                let ctx = canvas.getContext("2d");
+
+                ctx.save();
+                ctx.globalAlpha = document.getElementById("opacity").value;
+                ctx.fillStyle = document.getElementById("wmColor").value;
+                ctx.font = document.getElementById("fontSize").value + "px Arial";
+                ctx.textAlign = "center";
+                let x = document.getElementById("wmX").value;
+                let y = document.getElementById("wmY").value;
+
+                let rotate = document.getElementById("wmRotation").value;
+                ctx.translate(x, y);
+                ctx.rotate((rotate * Math.PI) / 180);
+                ctx.fillText(document.getElementById("wmText").value, 0, 0);
+                ctx.restore();
+            }
+
+            document.querySelectorAll("input,select").forEach((item) => {
+                item.oninput = function () {
+                    if (frontImg) draw(frontImg, frontCanvas);
+                    if (backImg) draw(backImg, backCanvas);
+                };
+            });
+
+            function generatePDF() {
+                if (!frontImg || !backImg) {
+                    alert("Please upload Front and Back IC");
+                    return;
+                }
+                const { jsPDF } = window.jspdf;
+                let pdf = new jsPDF("p", "mm", "a4");
+                const centerX = (210 - 85.6) / 2;
+
+                pdf.addImage(frontCanvas.toDataURL("image/jpeg"), "JPEG", centerX, 40, 85.6, 54);
+                pdf.addImage(backCanvas.toDataURL("image/jpeg"), "JPEG", centerX, 160, 85.6, 54);
+                pdf.save("Malaysia_IC.pdf");
+            }
+        </script>
+    </body>
+</html>
