@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+
+        <title>Chiikawa Lucky Wheel 🎡</title>
+
+        <style>
+            * {
+                box-sizing: border-box;
+            }
+
+            body {
+                margin: 0;
+                font-family: Arial, sans-serif;
+                background: #fff4f7;
+                text-align: center;
+                color: #654b4b;
+            }
+
+            h1 {
+                margin-top: 30px;
+            }
+
+            .wheel-container {
+                position: relative;
+                width: 320px;
+                height: 320px;
+                margin: 30px auto;
+            }
+
+            canvas {
+                width: 320px;
+                height: 320px;
+            }
+
+            /* Pointer */
+            .pointer {
+                position: absolute;
+                top: -10px;
+                left: 50%;
+                transform: translateX(-50%);
+
+                width: 0;
+                height: 0;
+
+                border-left: 18px solid transparent;
+                border-right: 18px solid transparent;
+                border-top: 35px solid #ff7f9f;
+
+                z-index: 10;
+            }
+
+            button {
+                border: none;
+                padding: 14px 35px;
+                font-size: 20px;
+                border-radius: 30px;
+
+                background: #ff9fba;
+                color: white;
+
+                cursor: pointer;
+
+                box-shadow: 0 4px 10px #e9b5c2;
+            }
+
+            button:hover {
+                background: #ff789d;
+            }
+
+            button:disabled {
+                background: #ccc;
+                cursor: not-allowed;
+            }
+
+            #result {
+                font-size: 24px;
+                font-weight: bold;
+                margin-top: 20px;
+                min-height: 35px;
+            }
+
+            .score {
+                font-size: 20px;
+                margin-top: 10px;
+            }
+        </style>
+    </head>
+
+    <body>
+        <h1>🌸 Chiikawa Lucky Wheel 🌸</h1>
+
+        <div class="score">
+            🎀 Score: <span id="score">0</span>
+        </div>
+
+        <div class="wheel-container">
+            <div class="pointer"></div>
+            <canvas id="wheel" width="320" height="320"></canvas>
+        </div>
+
+        <button id="spinButton" onclick="spin()">
+            🎡 SPIN!
+        </button>
+
+        <div id="result">
+            Spin the wheel! ✨
+        </div>
+
+
+        <script>
+
+            const canvas = document.getElementById("wheel");
+            const ctx = canvas.getContext("2d");
+
+            const prizes = [
+                "🍓 Strawberry",
+                "🍰 Cake",
+                "🍪 Cookie",
+                "🍙 Rice Ball",
+                "🍡 Dango",
+                "💰 100 Points",
+                "🎁 Mystery",
+                "💖 Chiikawa Love"
+            ];
+
+            const colors = [
+                "#ffd6e2",
+                "#ffe4b5",
+                "#d8f3dc",
+                "#cde7ff",
+                "#e8d7ff",
+                "#fff0a8",
+                "#ffd6a5",
+                "#ffc8dd"
+            ];
+
+            let rotation = 0;
+            let score = 0;
+            let spinning = false;
+
+
+            function drawWheel() {
+
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+
+                const radius = 150;
+
+                const slice = (Math.PI * 2) / prizes.length;
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                for (let i = 0; i < prizes.length; i++) {
+
+                    const start = i * slice;
+                    const end = start + slice;
+
+                    ctx.beginPath();
+
+                    ctx.moveTo(centerX, centerY);
+
+                    ctx.arc(
+                        centerX,
+                        centerY,
+                        radius,
+                        start,
+                        end
+                    );
+
+                    ctx.closePath();
+
+                    ctx.fillStyle = colors[i];
+
+                    ctx.fill();
+
+                    ctx.strokeStyle = "#ffffff";
+                    ctx.lineWidth = 3;
+
+                    ctx.stroke();
+
+
+                    // Text
+
+                    ctx.save();
+
+                    ctx.translate(centerX, centerY);
+
+                    ctx.rotate(start + slice / 2);
+
+                    ctx.textAlign = "right";
+
+                    ctx.fillStyle = "#654b4b";
+
+                    ctx.font = "14px Arial";
+
+                    ctx.fillText(
+                        prizes[i],
+                        radius - 10,
+                        5
+                    );
+
+                    ctx.restore();
+                }
+
+
+                // Center circle
+
+                ctx.beginPath();
+
+                ctx.arc(
+                    centerX,
+                    centerY,
+                    35,
+                    0,
+                    Math.PI * 2
+                );
+
+                ctx.fillStyle = "#fff";
+
+                ctx.fill();
+
+                ctx.strokeStyle = "#ff9fba";
+                ctx.lineWidth = 5;
+
+                ctx.stroke();
+
+
+                ctx.font = "25px Arial";
+
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+
+                ctx.fillText(
+                    "🌸",
+                    centerX,
+                    centerY
+                );
+            }
+
+
+            function spin() {
+
+                if (spinning) return;
+
+                spinning = true;
+
+                document.getElementById("spinButton").disabled = true;
+
+                document.getElementById("result").textContent =
+                    "Chiikawa is spinning... 🎡";
+
+
+                const extraRotation =
+                    Math.random() * Math.PI * 2;
+
+                const totalRotation =
+                    Math.PI * 2 * 5 + extraRotation;
+
+                const startRotation = rotation;
+
+                const endRotation =
+                    rotation + totalRotation;
+
+                const duration = 4000;
+
+                const startTime = performance.now();
+
+
+                function animate(currentTime) {
+
+                    const elapsed =
+                        currentTime - startTime;
+
+                    const progress =
+                        Math.min(elapsed / duration, 1);
+
+
+                    // Smooth slowing down
+
+                    const ease =
+                        1 - Math.pow(1 - progress, 4);
+
+
+                    rotation =
+                        startRotation +
+                        (endRotation - startRotation) * ease;
+
+
+                    canvas.style.transform =
+                        `rotate(${rotation}rad)`;
+
+
+                    if (progress < 1) {
+
+                        requestAnimationFrame(animate);
+
+                    } else {
+
+                        finishSpin();
+                    }
+                }
+
+
+                requestAnimationFrame(animate);
+            }
+
+
+            function finishSpin() {
+                const slice =
+                    (Math.PI * 2) / prizes.length;
+
+
+                let normalized =
+                    rotation % (Math.PI * 2);
+
+                if (normalized < 0) {
+                    normalized += Math.PI * 2;
+                }
+
+
+                let index =
+                    Math.floor(
+                        ((Math.PI * 1.5 - normalized)
+                        + Math.PI * 2)
+                        % (Math.PI * 2)
+                        / slice
+                    );
+
+
+                const prize = prizes[index];
+
+
+                // Give points
+
+                if (index === 5) {
+
+                    score += 100;
+
+                } else {
+
+                    score += 10;
+                }
+
+
+                document.getElementById("score").textContent =
+                    score;
+
+
+                document.getElementById("result").textContent =
+                    "🎉 Chiikawa got " + prize + "!";
+
+
+                spinning = false;
+
+                document.getElementById("spinButton").disabled =
+                    false;
+            }
+
+
+            drawWheel();
+
+        </script>
+
+    </body>
+</html>

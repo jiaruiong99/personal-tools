@@ -1,366 +1,230 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Malaysia IC PDF Generator</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<html lang="en">
 
-    <style>
-      body{
-          font-family:Arial, sans-serif;
-          padding:20px;
-          background:#f5f5f5;
-      }
+    <head>
 
-      .card{
-          background:white;
-          border:1px solid #ddd;
-          padding:15px;
-          max-width:600px;
-          margin-bottom:20px;
-          border-radius:10px;
-      }
+        <meta charset="UTF-8">
 
-      h2{
-          max-width:600px;
-      }
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0"
+        >
 
-      button, input, select{
-          width:100%;
-          padding:10px;
-          margin-top:8px;
-          box-sizing:border-box;
-      }
+        <title>My Little Projects</title>
 
-      button{
-          background:#0066ff;
-          color:white;
-          border:none;
-          border-radius:8px;
-          font-size:16px;
-      }
+        <link
+            rel="stylesheet"
+            href="css/style.css"
+        >
 
+    </head>
 
-      canvas{
-          width:100%;
-          margin-top:10px;
-          border:1px solid #ccc;
-          touch-action:none;
-      }
+    <body>
+        <div class="floating floating-1">✦</div>
+        <div class="floating floating-2">♡</div>
+        <div class="floating floating-3">✿</div>
+        <div class="floating floating-4">✦</div>
 
-      .camera-box{
-          position:relative;
-          width:100%;
-          max-width:600px;
-      }
+        <header class="navbar">
+
+            <div class="logo">
+                ✦ My Projects
+            </div>
+
+            <nav>
+                <a href="#projects">
+                    Projects
+                </a>
+                <a href="#about">
+                    About
+                </a>
+            </nav>
+        </header>
 
 
-      video{
-          width:100%;
-          border-radius:10px;
-      }
+        <main>
+
+            <section class="hero">
+                <div class="hero-content">
+                    <div class="hero-label">
+                        ✨ Welcome to my little corner
+                    </div>
+
+                    <h1>
+                        Building little things
+                        <span>with code.</span>
+                    </h1>
+
+                    <p>
+                        A collection of games, tools and experiments
+                        that I create while learning and exploring
+                        new ideas.
+                    </p>
+
+                    <a
+                        href="#projects"
+                        class="hero-button"
+                    >
+                        Explore Projects
+                        <span>↓</span>
+                    </a>
+
+                </div>
+
+            </section>
 
 
-      .ic-frame{
-          position:absolute;
-          width:70%;
-          aspect-ratio:1.585;
-          border:3px solid white;
-          left:15%;
-          top:30%;
-          box-sizing:border-box;
-          pointer-events:none;
-      }
+            <section
+                class="projects"
+                id="projects"
+            >
+
+                <div class="section-heading reveal">
+                    <span>
+                        ✦ MY WORK
+                    </span>
+
+                    <h2>
+                        Things I've built
+                    </h2>
+
+                    <p>
+                        Small projects made for fun,
+                        learning and experimenting.
+                    </p>
+
+                </div>
 
 
-      .hidden{
-          display:none;
-      }
-    </style>
-  </head>
+                <div class="project-grid">
+                    <a
+                        href="view/games/wheel.html"
+                        class="project-card reveal"
+                    >
+                        <div class="card-icon game-icon">
+                            🎮
+                        </div>
 
-  <body>
-    <h2>Malaysia IC PDF Generator </h2>
-    <div class="card">
-      <h3> Front IC </h3>
-      <div class="camera-box hidden" id="frontCameraBox">
-        <video id="frontVideo" autoplay playsinline></video>
-        <div class="ic-frame"></div>
-      </div>
-      <button onclick="startCamera('front')"> Take Front IC Photo </button>
-      <input type="file" accept="image/*" id="frontUpload">
-      <canvas id="frontCanvas"></canvas>
-    </div>
-    <div class="card">
-      <h3> Back IC </h3>
-      <div class="camera-box hidden" id="backCameraBox">
-        <video id="backVideo" autoplay playsinline></video>
-        <div class="ic-frame"></div>
-      </div>
-      <button onclick="startCamera('back')"> Take Back IC Photo </button>
-      <input type="file" accept="image/*" id="backUpload">
-      <canvas id="backCanvas"></canvas>
-    </div>
-    <div class="card">
-      <h3> Watermark Settings </h3>
-      <label> Mode </label>
-      <select id="mode">
-        <option value="color"> Color </option>
-        <option value="bw"> Black & White </option>
-      </select>
-      <label> Text </label>
-      <input id="wmText" value="VERIFICATION ONLY">
-      <label> Color </label>
-      <input type="color" id="wmColor" value="#808080">
-      <label> Opacity </label>
-      <input type="range" id="opacity" min="0.1" max="1" step="0.1" value="0.3">
-      <p> 👆 Drag watermark = Move <br> 🤏 Pinch = Resize <br> 🔄 Two fingers = Rotate </p>
-    </div>
-    <button onclick="generatePDF()"> Generate PDF </button>
-  </body>
+                        <div class="card-content">
+                            <div class="card-tag">
+                                GAME
+                            </div>
 
-    <script>
-        let frontImg = null;
-        let backImg = null;
-        let currentCamera = null;
-        let currentSide = null;
+                            <h3>
+                                Mini Games
+                            </h3>
 
-        let frontCanvas = document.getElementById("frontCanvas");
-        let backCanvas = document.getElementById("backCanvas");
-        let frontCtx = frontCanvas.getContext("2d");
-        let backCtx = backCanvas.getContext("2d");
+                            <p>
+                                Fun little browser games built
+                                with HTML, CSS and JavaScript.
+                            </p>
 
-        let watermark = {
-            x: 250,
-            y: 160,
-            size: 40,
-            rotation: -30,
-        };
+                            <span class="card-link">
+                                Play Game →
+                            </span>
+                        </div>
+                    </a>
 
-        document.getElementById("frontUpload").onchange = function (e) {
-            loadImage(e.target.files[0], (img) => {
-                frontImg = img;
-                draw(frontImg, frontCanvas);
-            });
-        };
 
-        document.getElementById("backUpload").onchange = function (e) {
-            loadImage(e.target.files[0], (img) => {
-                backImg = img;
-                draw(backImg, backCanvas);
-            });
-        };
+                    <a
+                        href="view/tools/IC.html"
+                        class="project-card reveal"
+                    >
 
-        function loadImage(file, callback) {
-            let reader = new FileReader();
+                        <div class="card-icon tool-icon">
+                            🪪
+                        </div>
 
-            reader.onload = function (e) {
-                let img = new Image();
-                img.onload = function () { callback(img); };
-                img.src = e.target.result;
-            };
+                        <div class="card-content">
 
-            reader.readAsDataURL(file);
-        }
+                            <div class="card-tag">
+                                TOOL
+                            </div>
 
-        async function startCamera(side) {
-            currentSide = side;
+                            <h3>
+                                IC PDF Generator
+                            </h3>
 
-            let video = document.getElementById(side + "Video");
-            let box = document.getElementById(side + "CameraBox");
-            box.classList.remove("hidden");
+                            <p>
+                                A browser-based tool for capturing
+                                IC images and generating PDF files.
+                            </p>
 
-            currentCamera = await navigator.mediaDevices.getUserMedia({
-                video: {
-                facingMode: "environment",
-                },
-            });
+                            <span class="card-link">
+                                Open Tool →
+                            </span>
 
-            video.srcObject = currentCamera;
-        }
+                        </div>
 
-        // ==============================
-        // CAMERA CAPTURE
-        // ==============================
+                    </a>
 
-        function capturePhoto() {
-            if (!currentSide || !currentCamera) return;
-            let video = document.getElementById(currentSide + "Video");
-            let temp = document.createElement("canvas");
-            temp.width = video.videoWidth;
-            temp.height = video.videoHeight;
 
-            let ctx = temp.getContext("2d");
-            ctx.drawImage(video, 0, 0, temp.width, temp.height);
-            cropIC(temp, currentSide);
+                    <!-- Coming Soon -->
+                    <div
+                        class="project-card coming-soon reveal"
+                    >
 
-            currentCamera.getTracks().forEach((track) => {
-                track.stop();
-            });
-        }
+                        <div class="card-icon">
+                            ✨
+                        </div>
 
-        function cropIC(source, side) {
-            let ratio = 85.6 / 54;
-            let width = source.width;
-            let height = width / ratio;
+                        <div class="card-content">
 
-            if (height > source.height) {
-                height = source.height;
-                width = height * ratio;
-            }
+                            <div class="card-tag">
+                                SOON
+                            </div>
 
-            let x = (source.width - width) / 2;
-            let y = (source.height - height) / 2;
-            let crop = document.createElement("canvas");
-            crop.width = width;
-            crop.height = height;
+                            <h3>
+                                More Projects
+                            </h3>
 
-            let ctx = crop.getContext("2d");
+                            <p>
+                                More small ideas, experiments
+                                and useful tools coming soon.
+                            </p>
 
-            ctx.drawImage( source, x, y, width, height, 0, 0, width, height);
+                            <span class="card-link">
+                                Coming Soon
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-            let img = new Image();
-            img.onload = function () {
-                if (side == "front") {
-                    frontImg = img;
-                    draw(frontImg, frontCanvas);
-                } else {
-                    backImg = img;
-                    draw(backImg, backCanvas);
-                }
-            };
 
-            img.src = crop.toDataURL("image/jpeg");
-        }
+            <section class="about" id="about">
+                <div class="about-content reveal">
+                    <span class="section-label">
+                        ✦ ABOUT
+                    </span>
 
-        // ==============================
-        // DRAW IC
-        // ==============================
+                    <h2>
+                        Just making things
+                        <span>one project at a time.</span>
+                    </h2>
 
-        function draw(img, canvas) {
-            let ctx = canvas.getContext("2d");
-            canvas.width = 500;
-            canvas.height = 315;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            addWatermark(canvas);
-        }
+                    <p>
+                        I enjoy turning small ideas into something
+                        interactive and useful. This website is a
+                        place where I keep my experiments, tools
+                        and little games.
+                    </p>
 
-        // ==============================
-        // BLACK WHITE
-        // ==============================
+                </div>
+            </section>
+        </main>
 
-        function applyBlackWhite(canvas) {
-            if (document.getElementById("mode").value != "bw") return;
-            let ctx = canvas.getContext("2d");
-            let data = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-            for (let i = 0; i < data.data.length; i += 4) {
-                let avg = (data.data[i] + data.data[i + 1] + data.data[i + 2]) / 3;
-                data.data[i] = avg;
-                data.data[i + 1] = avg;
-                data.data[i + 2] = avg;
-            }
+        <footer>
+            <div>
+                © 2026 My Projects
+            </div>
+            <div>
+                Built with HTML, CSS & JavaScript ✦
+            </div>
+        </footer>
 
-            ctx.putImageData(data, 0, 0);
-        }
 
-        // ==============================
-        // WATERMARK
-        // ==============================
-
-        function addWatermark(canvas) {
-            let ctx = canvas.getContext("2d");
-            ctx.save();
-            ctx.globalAlpha = document.getElementById("opacity").value;
-            ctx.fillStyle = document.getElementById("wmColor").value;
-            ctx.font = watermark.size + "px Arial";
-            ctx.textAlign = "center";
-            ctx.translate(watermark.x, watermark.y);
-            ctx.rotate((watermark.rotation * Math.PI) / 180);
-            ctx.fillText(document.getElementById("wmText").value, 0, 0);
-            ctx.restore();
-        }
-
-        // ==============================
-        // WATERMARK GESTURE
-        // ==============================
-
-        let activeCanvas = null;
-        let dragging = false;
-        let startX = 0;
-        let startY = 0;
-        let startDistance = 0;
-        let startAngle = 0;
-
-        function setupGesture(canvas) {
-            canvas.addEventListener("pointerdown", (e) => {
-                canvas.setPointerCapture(e.pointerId);
-
-                if (e.pointerType == "mouse") {
-                    dragging = true;
-                    startX = e.offsetX;
-                    startY = e.offsetY;
-                }
-            });
-
-            canvas.addEventListener("pointermove", (e) => {
-                if (!dragging) return;
-
-                let dx = e.offsetX - startX;
-                let dy = e.offsetY - startY;
-                watermark.x += dx;
-                watermark.y += dy;
-                startX = e.offsetX;
-                startY = e.offsetY;
-                redrawAll();
-            });
-
-            canvas.addEventListener("pointerup", () => {
-                dragging = false;
-            });
-        }
-
-        setupGesture(frontCanvas);
-        setupGesture(backCanvas);
-
-        document.querySelectorAll("input,select").forEach((item) => {
-            item.oninput = function () {
-                redrawAll();
-            };
-        });
-
-        function redrawAll() {
-            if (frontImg) draw(frontImg, frontCanvas);
-            if (backImg) draw(backImg, backCanvas);
-        }
-
-        // ==============================
-        // GENERATE PDF
-        // =============================
-        function generatePDF() {
-            if (!frontImg || !backImg) {
-                alert("Please upload Front and Back IC");
-                return;
-            }
-
-            const { jsPDF } = window.jspdf;
-
-            let pdf = new jsPDF("p", "mm", "a4");
-
-            pdf.setProperties({
-                title: "Malaysia IC Copy",
-            });
-
-            const icWidth = 85.6;
-            const icHeight = 54;
-            const pageWidth = 210;
-            const centerX = (pageWidth - icWidth) / 2;
-
-            pdf.addImage(frontCanvas.toDataURL("image/jpeg", 0.95), "JPEG", centerX, 30, icWidth, icHeight);
-            pdf.addImage(backCanvas.toDataURL("image/jpeg", 0.95), "JPEG", centerX, 150, icWidth, icHeight);
-
-            pdf.save("Malaysia_IC.pdf");
-        }
-    </script>
+        <script src="js/script.js"></script>
+    </body>
 </html>

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Chiikawa Catch Game 🎀</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #fff4f7;
+            text-align: center;
+        }
+
+        h1 {
+            margin-top: 25px;
+            color: #6b4b4b;
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: center;
+            gap: 50px;
+            font-size: 20px;
+            margin: 15px;
+            color: #6b4b4b;
+        }
+
+        button {
+            padding: 12px 25px;
+            font-size: 18px;
+            border: none;
+            border-radius: 20px;
+            background: #ffb6c9;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #ff91ae;
+        }
+
+        #game {
+            position: relative;
+            width: 90%;
+            max-width: 700px;
+            height: 450px;
+            margin: 20px auto;
+            background: #fff;
+            border: 4px solid #f3c7d5;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        /* Chiikawa style character */
+        #chiikawa {
+            position: absolute;
+            width: 70px;
+            height: 65px;
+            background: #fffdf8;
+            border: 3px solid #6b4b4b;
+            border-radius: 45% 45% 40% 40%;
+            cursor: pointer;
+            display: none;
+        }
+
+        /* ears */
+        #chiikawa::before,
+        #chiikawa::after {
+            content: "";
+            position: absolute;
+            width: 28px;
+            height: 38px;
+            background: #fffdf8;
+            border: 3px solid #6b4b4b;
+            top: -25px;
+            border-radius: 50%;
+            z-index: -1;
+        }
+
+        #chiikawa::before {
+            left: 5px;
+            transform: rotate(-15deg);
+        }
+
+        #chiikawa::after {
+            right: 5px;
+            transform: rotate(15deg);
+        }
+
+        /* eyes */
+        .eye {
+            position: absolute;
+            width: 6px;
+            height: 8px;
+            background: #333;
+            border-radius: 50%;
+            top: 23px;
+        }
+
+        .eye.left {
+            left: 20px;
+        }
+
+        .eye.right {
+            right: 20px;
+        }
+
+        /* mouth */
+        .mouth {
+            position: absolute;
+            width: 12px;
+            height: 8px;
+            border-bottom: 2px solid #333;
+            border-radius: 50%;
+            left: 26px;
+            top: 35px;
+        }
+
+        /* Food */
+        .food {
+            position: absolute;
+            font-size: 35px;
+            cursor: pointer;
+            display: none;
+        }
+
+        #message {
+            color: #8b6565;
+            font-size: 18px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>🌸 Chiikawa Catch Game 🌸</h1>
+
+    <div class="game-info">
+        <div>🍓 Score: <span id="score">0</span></div>
+        <div>⏰ Time: <span id="time">30</span>s</div>
+    </div>
+
+    <button onclick="startGame()">Start Game 🎮</button>
+
+    <div id="message">
+        Help Chiikawa catch the food! 🍰
+    </div>
+
+    <div id="game">
+        <div id="food" class="food">🍰</div>
+    </div>
+
+    <script>
+
+        let score = 0;
+        let time = 30;
+        let timer;
+
+        const game = document.getElementById("game");
+        const food = document.getElementById("food");
+
+        const foods = ["🍰", "🍓", "🍪", "🍙", "🍡", "🥞"];
+
+        function startGame() {
+
+            score = 0;
+            time = 30;
+
+            document.getElementById("score").textContent = score;
+            document.getElementById("time").textContent = time;
+
+            food.style.display = "block";
+            moveFood();
+
+            clearInterval(timer);
+
+            timer = setInterval(function () {
+                time--;
+
+                document.getElementById("time").textContent = time;
+                if (time <= 0) {
+                    clearInterval(timer);
+                    food.style.display = "none";
+                    document.getElementById("message").textContent =
+                        "Game Over! Chiikawa got " + score + " food! 🎀";
+
+                    alert("Chiikawa Score: " + score);
+                }
+
+            }, 1000);
+        }
+
+        function moveFood() {
+
+            const maxX = game.clientWidth - food.clientWidth;
+            const maxY = game.clientHeight - food.clientHeight;
+
+            const x = Math.random() * maxX;
+            const y = Math.random() * maxY;
+
+            food.style.left = x + "px";
+            food.style.top = y + "px";
+
+            food.textContent =
+                foods[Math.floor(Math.random() * foods.length)];
+        }
+
+        food.addEventListener("click", function () {
+            score++;
+            document.getElementById("score").textContent = score;
+            moveFood();
+        });
+
+    </script>
+
+</body>
+</html>
