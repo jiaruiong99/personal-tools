@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>AR Cute Character</title>
+        <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+
+        <style>
+
+            * {
+                box-sizing: border-box;
+            }
+
+            html,
+            body {
+                margin: 0;
+
+                width: 100%;
+                height: 100%;
+
+                overflow: hidden;
+
+                font-family: Arial, sans-serif;
+            }
+
+
+            /* =========================
+            Camera
+            ========================= */
+
+            #camera {
+                position: fixed;
+
+                inset: 0;
+
+                width: 100%;
+                height: 100%;
+
+                object-fit: cover;
+
+                z-index: 1;
+            }
+
+
+            /* =========================
+            3D Canvas
+            ========================= */
+
+            #arCanvas {
+                position: fixed;
+
+                inset: 0;
+
+                width: 100%;
+                height: 100%;
+
+                z-index: 2;
+
+                touch-action: manipulation;
+            }
+
+
+            /* =========================
+            UI
+            ========================= */
+
+            .ui {
+                position: fixed;
+
+                top: 20px;
+                left: 50%;
+
+                transform: translateX(-50%);
+
+                z-index: 10;
+
+                display: flex;
+
+                gap: 10px;
+            }
+
+
+            .badge {
+                padding: 10px 18px;
+
+                border-radius: 30px;
+
+                background:
+                    rgba(0, 0, 0, 0.55);
+
+                color: white;
+
+                backdrop-filter: blur(10px);
+
+                font-weight: bold;
+            }
+
+
+            /* =========================
+            Start Screen
+            ========================= */
+
+            #startScreen {
+                position: fixed;
+
+                inset: 0;
+
+                z-index: 20;
+
+                display: flex;
+
+                flex-direction: column;
+
+                justify-content: center;
+
+                align-items: center;
+
+                padding: 30px;
+
+                text-align: center;
+
+                color: white;
+
+                background:
+                    rgba(0, 0, 0, 0.65);
+            }
+
+
+            #startScreen h1 {
+                font-size: 38px;
+
+                margin-bottom: 10px;
+            }
+
+
+            #startScreen p {
+                max-width: 350px;
+
+                line-height: 1.6;
+
+                opacity: 0.9;
+            }
+
+
+            button {
+                margin-top: 20px;
+
+                border: none;
+
+                padding: 14px 28px;
+
+                border-radius: 30px;
+
+                background: #ff9fba;
+
+                color: white;
+
+                font-size: 17px;
+
+                font-weight: bold;
+
+                cursor: pointer;
+            }
+
+
+            /* =========================
+            Hint
+            ========================= */
+
+            #hint {
+                position: fixed;
+
+                bottom: 30px;
+
+                left: 50%;
+
+                transform: translateX(-50%);
+
+                z-index: 10;
+
+                color: white;
+
+                padding: 10px 18px;
+
+                border-radius: 30px;
+
+                background:
+                    rgba(0, 0, 0, 0.45);
+
+                backdrop-filter: blur(8px);
+            }
+
+        </style>
+    </head>
+
+
+    <body>
+
+
+        <!-- =========================
+            Camera
+        ========================= -->
+
+        <video
+            id="camera"
+            autoplay
+            playsinline
+            muted
+        ></video>
+
+
+        <!-- =========================
+            Three.js
+        ========================= -->
+
+        <canvas id="arCanvas"></canvas>
+
+
+        <!-- =========================
+            UI
+        ========================= -->
+
+        <div class="ui">
+
+            <div class="badge">
+                ⭐ Score:
+                <span id="score">0</span>
+            </div>
+
+        </div>
+
+
+        <!-- =========================
+            Start
+        ========================= -->
+
+        <div id="startScreen">
+            <h1>
+                🧸 Cute AR
+            </h1>
+
+            <p>
+                Allow camera access and
+                tap the character to make
+                it jump!
+            </p>
+
+            <button onclick="startAR()">
+                Start AR
+            </button>
+        </div>
+
+
+        <div id="hint">
+            👆 Tap the character
+        </div>
+
+
+        <script>
+
+
+            /* =========================================
+            Variables
+            ========================================= */
+
+            const video =
+                document.getElementById("camera");
+
+            const canvas =
+                document.getElementById("arCanvas");
+
+            const startScreen =
+                document.getElementById("startScreen");
+
+            const scoreElement =
+                document.getElementById("score");
+
+
+            let score = 0;
+
+            let jumping = false;
+
+            let jumpStart = 0;
+
+
+            /* =========================================
+            Camera
+            ========================================= */
+
+            async function startCamera() {
+
+                try {
+
+                    const stream =
+                        await navigator
+                            .mediaDevices
+                            .getUserMedia({
+
+                                video: {
+
+                                    facingMode: {
+                                        ideal: "environment"
+                                    }
+
+                                },
+
+                                audio: false
+
+                            });
+
+
+                    video.srcObject =
+                        stream;
+
+
+                } catch (error) {
+
+                    console.error(error);
+
+                    alert(
+                        "Camera permission is required."
+                    );
+
+                }
+
+            }
+
+
+            /* =========================================
+            Three.js Scene
+            ========================================= */
+
+            const renderer =
+                new THREE.WebGLRenderer({
+
+                    canvas: canvas,
+
+                    alpha: true,
+
+                    antialias: true
+
+                });
+
+
+            renderer.setPixelRatio(
+                Math.min(
+                    window.devicePixelRatio,
+                    2
+                )
+            );
+
+
+            renderer.setSize(
+                window.innerWidth,
+                window.innerHeight
+            );
+
+
+            const scene =
+                new THREE.Scene();
+
+
+            const camera =
+                new THREE.PerspectiveCamera(
+
+                    45,
+
+                    window.innerWidth /
+                    window.innerHeight,
+
+                    0.1,
+
+                    100
+
+                );
+
+
+            camera.position.z = 5;
+
+
+            /* =========================================
+            Light
+            ========================================= */
+
+            const ambientLight =
+                new THREE.AmbientLight(
+                    0xffffff,
+                    2
+                );
+
+            scene.add(
+                ambientLight
+            );
+
+
+            const light =
+                new THREE.DirectionalLight(
+                    0xffffff,
+                    2
+                );
+
+            light.position.set(
+                2,
+                4,
+                5
+            );
+
+            scene.add(
+                light
+            );
+
+
+            /* =========================================
+            Character
+            ========================================= */
+
+            const character =
+                new THREE.Group();
+
+
+            /*
+                Body
+            */
+
+            const bodyGeometry =
+                new THREE.SphereGeometry(
+                    0.8,
+                    32,
+                    32
+                );
+
+
+            const bodyMaterial =
+                new THREE.MeshStandardMaterial({
+
+                    color: 0xfff3dc,
+
+                    roughness: 0.8
+
+                });
+
+
+            const body =
+                new THREE.Mesh(
+                    bodyGeometry,
+                    bodyMaterial
+                );
+
+
+            character.add(
+                body
+            );
+
+
+            /*
+                Ears
+            */
+
+            const earGeometry =
+                new THREE.SphereGeometry(
+                    0.35,
+                    24,
+                    24
+                );
+
+
+            const earMaterial =
+                new THREE.MeshStandardMaterial({
+
+                    color: 0xffd8e5
+
+                });
+
+
+            const leftEar =
+                new THREE.Mesh(
+                    earGeometry,
+                    earMaterial
+                );
+
+
+            leftEar.scale.y = 1.5;
+
+            leftEar.position.set(
+                -0.45,
+                0.65,
+                0
+            );
+
+
+            const rightEar =
+                new THREE.Mesh(
+                    earGeometry,
+                    earMaterial
+                );
+
+
+            rightEar.scale.y = 1.5;
+
+            rightEar.position.set(
+                0.45,
+                0.65,
+                0
+            );
+
+
+            character.add(
+                leftEar,
+                rightEar
+            );
+
+
+            /*
+                Eyes
+            */
+
+            const eyeGeometry =
+                new THREE.SphereGeometry(
+                    0.09,
+                    16,
+                    16
+                );
+
+
+            const eyeMaterial =
+                new THREE.MeshBasicMaterial({
+
+                    color: 0x333333
+
+                });
+
+
+            const leftEye =
+                new THREE.Mesh(
+                    eyeGeometry,
+                    eyeMaterial
+                );
+
+
+            leftEye.position.set(
+                -0.25,
+                0.15,
+                0.72
+            );
+
+
+            const rightEye =
+                new THREE.Mesh(
+                    eyeGeometry,
+                    eyeMaterial
+                );
+
+
+            rightEye.position.set(
+                0.25,
+                0.15,
+                0.72
+            );
+
+
+            character.add(
+                leftEye,
+                rightEye
+            );
+
+
+            /*
+                Nose
+            */
+
+            const noseGeometry =
+                new THREE.SphereGeometry(
+                    0.06,
+                    12,
+                    12
+                );
+
+
+            const noseMaterial =
+                new THREE.MeshBasicMaterial({
+
+                    color: 0xff9fba
+
+                });
+
+
+            const nose =
+                new THREE.Mesh(
+                    noseGeometry,
+                    noseMaterial
+                );
+
+
+            nose.position.set(
+                0,
+                -0.02,
+                0.78
+            );
+
+            character.add(
+                nose
+            );
+
+            character.position.set(
+                0,
+                -0.7,
+                0
+            );
+
+
+            character.scale.set(
+                1.1,
+                1.1,
+                1.1
+            );
+
+
+            scene.add(
+                character
+            );
+
+
+            const raycaster =
+                new THREE.Raycaster();
+
+
+            const mouse =
+                new THREE.Vector2();
+
+
+            /* =========================================
+            Touch / Click
+            ========================================= */
+
+            function handleInteraction(
+                event
+            ) {
+
+                const rect =
+                    canvas.getBoundingClientRect();
+
+
+                let clientX;
+                let clientY;
+
+
+                if (
+                    event.touches &&
+                    event.touches.length
+                ) {
+
+                    clientX =
+                        event.touches[0].clientX;
+
+                    clientY =
+                        event.touches[0].clientY;
+
+                } else {
+
+                    clientX =
+                        event.clientX;
+
+                    clientY =
+                        event.clientY;
+
+                }
+
+
+                mouse.x =
+                    (
+                        clientX -
+                        rect.left
+                    ) /
+                    rect.width *
+                    2 - 1;
+
+
+                mouse.y =
+                    -(
+                        (
+                            clientY -
+                            rect.top
+                        ) /
+                        rect.height
+                    ) *
+                    2 + 1;
+
+
+                raycaster.setFromCamera(
+                    mouse,
+                    camera
+                );
+
+
+                const objects =
+                    raycaster.intersectObjects(
+                        character.children,
+                        true
+                    );
+
+
+                if (
+                    objects.length > 0
+                ) {
+
+                    jump();
+
+                }
+
+            }
+
+
+            canvas.addEventListener(
+                "click",
+                handleInteraction
+            );
+
+
+            canvas.addEventListener(
+                "touchend",
+                handleInteraction
+            );
+
+
+            /* =========================================
+            Jump
+            ========================================= */
+
+            function jump() {
+
+                if (jumping) {
+                    return;
+                }
+
+
+                jumping = true;
+
+                jumpStart =
+                    performance.now();
+
+
+                score++;
+
+                scoreElement.textContent =
+                    score;
+
+            }
+
+
+            /* =========================================
+            Animation
+            ========================================= */
+
+            function animate(
+                currentTime
+            ) {
+
+                requestAnimationFrame(
+                    animate
+                );
+
+
+                /*
+                    Idle animation
+                */
+
+                if (!jumping) {
+
+                    character.position.y =
+                        -0.7 +
+                        Math.sin(
+                            currentTime *
+                            0.002
+                        ) *
+                        0.04;
+
+                }
+
+
+                /*
+                    Jump animation
+                */
+
+                if (jumping) {
+
+                    const elapsed =
+                        currentTime -
+                        jumpStart;
+
+
+                    const duration =
+                        650;
+
+
+                    const progress =
+                        Math.min(
+                            elapsed /
+                            duration,
+                            1
+                        );
+
+
+                    character.position.y =
+                        -0.7 +
+                        Math.sin(
+                            progress *
+                            Math.PI
+                        ) *
+                        1.0;
+
+
+                    character.rotation.y =
+                        progress *
+                        Math.PI *
+                        2;
+
+
+                    if (
+                        progress >= 1
+                    ) {
+
+                        jumping = false;
+
+                        character.position.y =
+                            -0.7;
+
+                        character.rotation.y =
+                            0;
+
+                    }
+
+                }
+
+
+                /*
+                    Small rotation
+                */
+
+                if (!jumping) {
+
+                    character.rotation.y =
+                        Math.sin(
+                            currentTime *
+                            0.001
+                        ) *
+                        0.1;
+
+                }
+
+
+                renderer.render(
+                    scene,
+                    camera
+                );
+
+            }
+
+
+            animate();
+
+
+            /* =========================================
+            Start AR
+            ========================================= */
+
+            async function startAR() {
+
+                await startCamera();
+
+                startScreen.style.display =
+                    "none";
+
+            }
+
+
+            /* =========================================
+            Resize
+            ========================================= */
+
+            window.addEventListener(
+                "resize",
+                () => {
+
+                    camera.aspect =
+                        window.innerWidth /
+                        window.innerHeight;
+
+                    camera.updateProjectionMatrix();
+
+
+                    renderer.setSize(
+                        window.innerWidth,
+                        window.innerHeight
+                    );
+
+                }
+            );
+
+        </script>
+    </body>
+</html>
