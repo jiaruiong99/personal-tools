@@ -3,13 +3,11 @@
 
     <head>
         <meta charset="UTF-8">
-
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>AR Cute Character</title>
-        <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+
+        <title>Face AR</title>
 
         <style>
-
             * {
                 box-sizing: border-box;
             }
@@ -17,19 +15,12 @@
             html,
             body {
                 margin: 0;
-
                 width: 100%;
                 height: 100%;
-
                 overflow: hidden;
-
+                background: #000;
                 font-family: Arial, sans-serif;
             }
-
-
-            /* =========================
-            Camera
-            ========================= */
 
             #camera {
                 position: fixed;
@@ -41,15 +32,12 @@
 
                 object-fit: cover;
 
+                transform: scaleX(-1);
+
                 z-index: 1;
             }
 
-
-            /* =========================
-            3D Canvas
-            ========================= */
-
-            #arCanvas {
+            #overlay {
                 position: fixed;
 
                 inset: 0;
@@ -59,96 +47,46 @@
 
                 z-index: 2;
 
-                touch-action: manipulation;
+                pointer-events: none;
             }
-
-
-            /* =========================
-            UI
-            ========================= */
-
-            .ui {
-                position: fixed;
-
-                top: 20px;
-                left: 50%;
-
-                transform: translateX(-50%);
-
-                z-index: 10;
-
-                display: flex;
-
-                gap: 10px;
-            }
-
-
-            .badge {
-                padding: 10px 18px;
-
-                border-radius: 30px;
-
-                background:
-                    rgba(0, 0, 0, 0.55);
-
-                color: white;
-
-                backdrop-filter: blur(10px);
-
-                font-weight: bold;
-            }
-
-
-            /* =========================
-            Start Screen
-            ========================= */
 
             #startScreen {
                 position: fixed;
 
                 inset: 0;
 
-                z-index: 20;
+                z-index: 10;
 
                 display: flex;
 
                 flex-direction: column;
 
-                justify-content: center;
-
                 align-items: center;
 
-                padding: 30px;
-
-                text-align: center;
+                justify-content: center;
 
                 color: white;
 
                 background:
                     rgba(0, 0, 0, 0.65);
+
+                text-align: center;
+
+                padding: 30px;
             }
 
-
             #startScreen h1 {
-                font-size: 38px;
-
+                font-size: 36px;
                 margin-bottom: 10px;
             }
 
-
             #startScreen p {
                 max-width: 350px;
-
                 line-height: 1.6;
-
-                opacity: 0.9;
             }
 
-
             button {
-                margin-top: 20px;
-
-                border: none;
+                border: 0;
 
                 padding: 14px 28px;
 
@@ -158,52 +96,38 @@
 
                 color: white;
 
-                font-size: 17px;
+                font-size: 18px;
 
                 font-weight: bold;
-
-                cursor: pointer;
             }
 
-
-            /* =========================
-            Hint
-            ========================= */
-
-            #hint {
+            #status {
                 position: fixed;
 
-                bottom: 30px;
+                top: 20px;
 
                 left: 50%;
 
                 transform: translateX(-50%);
 
-                z-index: 10;
-
-                color: white;
+                z-index: 5;
 
                 padding: 10px 18px;
 
                 border-radius: 30px;
 
                 background:
-                    rgba(0, 0, 0, 0.45);
+                    rgba(0, 0, 0, 0.5);
+
+                color: white;
 
                 backdrop-filter: blur(8px);
             }
-
         </style>
     </head>
 
 
     <body>
-
-
-        <!-- =========================
-            Camera
-        ========================= -->
-
         <video
             id="camera"
             autoplay
@@ -211,693 +135,600 @@
             muted
         ></video>
 
-
-        <!-- =========================
-            Three.js
-        ========================= -->
-
-        <canvas id="arCanvas"></canvas>
+        <canvas id="overlay"></canvas>
 
 
-        <!-- =========================
-            UI
-        ========================= -->
-
-        <div class="ui">
-
-            <div class="badge">
-                ⭐ Score:
-                <span id="score">0</span>
-            </div>
-
+        <div id="status">
+            📷 Waiting for face...
         </div>
-
-
-        <!-- =========================
-            Start
-        ========================= -->
 
         <div id="startScreen">
             <h1>
-                🧸 Cute AR
+                🎀 Cute Face AR
             </h1>
-
             <p>
                 Allow camera access and
-                tap the character to make
-                it jump!
+                put your face in front of
+                the camera.
             </p>
 
             <button onclick="startAR()">
-                Start AR
+                Start
             </button>
         </div>
 
+        <script type="module">
 
-        <div id="hint">
-            👆 Tap the character
-        </div>
+            import {
+                FaceLandmarker,
+                FilesetResolver
+            } from
+            "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
 
-
-        <script>
-
-
-            /* =========================================
-            Variables
-            ========================================= */
 
             const video =
-                document.getElementById("camera");
+                document.getElementById(
+                    "camera"
+                );
+
 
             const canvas =
-                document.getElementById("arCanvas");
+                document.getElementById(
+                    "overlay"
+                );
+
+
+            const ctx =
+                canvas.getContext(
+                    "2d"
+                );
+
+
+            const status =
+                document.getElementById(
+                    "status"
+                );
+
 
             const startScreen =
-                document.getElementById("startScreen");
-
-            const scoreElement =
-                document.getElementById("score");
-
-
-            let score = 0;
-
-            let jumping = false;
-
-            let jumpStart = 0;
+                document.getElementById(
+                    "startScreen"
+                );
 
 
-            /* =========================================
+            let faceLandmarker;
+
+            let running = false;
+
+
+            /*
+            =========================================
+            Create Face Landmarker
+            =========================================
+            */
+
+            async function createFaceLandmarker() {
+
+                const vision =
+                    await FilesetResolver.forVisionTasks(
+
+                        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
+
+                    );
+
+
+                faceLandmarker =
+                    await FaceLandmarker.createFromOptions(
+
+                        vision,
+
+                        {
+
+                            baseOptions: {
+
+                                modelAssetPath:
+                                    "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task"
+
+                            },
+
+                            runningMode:
+                                "VIDEO",
+
+                            numFaces:
+                                1,
+
+                            minFaceDetectionConfidence:
+                                0.5,
+
+                            minFacePresenceConfidence:
+                                0.5,
+
+                            minTrackingConfidence:
+                                0.5
+
+                        }
+
+                    );
+
+            }
+
+
+            /*
+            =========================================
             Camera
-            ========================================= */
+            =========================================
+            */
 
             async function startCamera() {
 
-                try {
+                const stream =
+                    await navigator
+                        .mediaDevices
+                        .getUserMedia({
 
-                    const stream =
-                        await navigator
-                            .mediaDevices
-                            .getUserMedia({
+                            video: {
 
-                                video: {
+                                facingMode:
+                                    "user"
 
-                                    facingMode: {
-                                        ideal: "environment"
-                                    }
+                            },
 
-                                },
+                            audio: false
 
-                                audio: false
-
-                            });
+                        });
 
 
-                    video.srcObject =
-                        stream;
+                video.srcObject =
+                    stream;
 
 
-                } catch (error) {
-
-                    console.error(error);
-
-                    alert(
-                        "Camera permission is required."
-                    );
-
-                }
+                await video.play();
 
             }
 
 
-            /* =========================================
-            Three.js Scene
-            ========================================= */
+            /*
+            =========================================
+            Start
+            =========================================
+            */
 
-            const renderer =
-                new THREE.WebGLRenderer({
+            window.startAR =
+                async function() {
 
-                    canvas: canvas,
-
-                    alpha: true,
-
-                    antialias: true
-
-                });
+                    startScreen.style.display =
+                        "none";
 
 
-            renderer.setPixelRatio(
-                Math.min(
+                    status.textContent =
+                        "Loading face tracking...";
+
+
+                    await createFaceLandmarker();
+
+
+                    await startCamera();
+
+
+                    running = true;
+
+
+                    resizeCanvas();
+
+
+                    detectFace();
+
+                };
+
+
+            /*
+            =========================================
+            Canvas Size
+            =========================================
+            */
+
+            function resizeCanvas() {
+
+                canvas.width =
+                    window.innerWidth *
+                    window.devicePixelRatio;
+
+
+                canvas.height =
+                    window.innerHeight *
+                    window.devicePixelRatio;
+
+
+                canvas.style.width =
+                    window.innerWidth + "px";
+
+
+                canvas.style.height =
+                    window.innerHeight + "px";
+
+
+                ctx.setTransform(
                     window.devicePixelRatio,
-                    2
-                )
-            );
-
-
-            renderer.setSize(
-                window.innerWidth,
-                window.innerHeight
-            );
-
-
-            const scene =
-                new THREE.Scene();
-
-
-            const camera =
-                new THREE.PerspectiveCamera(
-
-                    45,
-
-                    window.innerWidth /
-                    window.innerHeight,
-
-                    0.1,
-
-                    100
-
+                    0,
+                    0,
+                    window.devicePixelRatio,
+                    0,
+                    0
                 );
-
-
-            camera.position.z = 5;
-
-
-            /* =========================================
-            Light
-            ========================================= */
-
-            const ambientLight =
-                new THREE.AmbientLight(
-                    0xffffff,
-                    2
-                );
-
-            scene.add(
-                ambientLight
-            );
-
-
-            const light =
-                new THREE.DirectionalLight(
-                    0xffffff,
-                    2
-                );
-
-            light.position.set(
-                2,
-                4,
-                5
-            );
-
-            scene.add(
-                light
-            );
-
-
-            /* =========================================
-            Character
-            ========================================= */
-
-            const character =
-                new THREE.Group();
-
-
-            /*
-                Body
-            */
-
-            const bodyGeometry =
-                new THREE.SphereGeometry(
-                    0.8,
-                    32,
-                    32
-                );
-
-
-            const bodyMaterial =
-                new THREE.MeshStandardMaterial({
-
-                    color: 0xfff3dc,
-
-                    roughness: 0.8
-
-                });
-
-
-            const body =
-                new THREE.Mesh(
-                    bodyGeometry,
-                    bodyMaterial
-                );
-
-
-            character.add(
-                body
-            );
-
-
-            /*
-                Ears
-            */
-
-            const earGeometry =
-                new THREE.SphereGeometry(
-                    0.35,
-                    24,
-                    24
-                );
-
-
-            const earMaterial =
-                new THREE.MeshStandardMaterial({
-
-                    color: 0xffd8e5
-
-                });
-
-
-            const leftEar =
-                new THREE.Mesh(
-                    earGeometry,
-                    earMaterial
-                );
-
-
-            leftEar.scale.y = 1.5;
-
-            leftEar.position.set(
-                -0.45,
-                0.65,
-                0
-            );
-
-
-            const rightEar =
-                new THREE.Mesh(
-                    earGeometry,
-                    earMaterial
-                );
-
-
-            rightEar.scale.y = 1.5;
-
-            rightEar.position.set(
-                0.45,
-                0.65,
-                0
-            );
-
-
-            character.add(
-                leftEar,
-                rightEar
-            );
-
-
-            /*
-                Eyes
-            */
-
-            const eyeGeometry =
-                new THREE.SphereGeometry(
-                    0.09,
-                    16,
-                    16
-                );
-
-
-            const eyeMaterial =
-                new THREE.MeshBasicMaterial({
-
-                    color: 0x333333
-
-                });
-
-
-            const leftEye =
-                new THREE.Mesh(
-                    eyeGeometry,
-                    eyeMaterial
-                );
-
-
-            leftEye.position.set(
-                -0.25,
-                0.15,
-                0.72
-            );
-
-
-            const rightEye =
-                new THREE.Mesh(
-                    eyeGeometry,
-                    eyeMaterial
-                );
-
-
-            rightEye.position.set(
-                0.25,
-                0.15,
-                0.72
-            );
-
-
-            character.add(
-                leftEye,
-                rightEye
-            );
-
-
-            /*
-                Nose
-            */
-
-            const noseGeometry =
-                new THREE.SphereGeometry(
-                    0.06,
-                    12,
-                    12
-                );
-
-
-            const noseMaterial =
-                new THREE.MeshBasicMaterial({
-
-                    color: 0xff9fba
-
-                });
-
-
-            const nose =
-                new THREE.Mesh(
-                    noseGeometry,
-                    noseMaterial
-                );
-
-
-            nose.position.set(
-                0,
-                -0.02,
-                0.78
-            );
-
-            character.add(
-                nose
-            );
-
-            character.position.set(
-                0,
-                -0.7,
-                0
-            );
-
-
-            character.scale.set(
-                1.1,
-                1.1,
-                1.1
-            );
-
-
-            scene.add(
-                character
-            );
-
-
-            const raycaster =
-                new THREE.Raycaster();
-
-
-            const mouse =
-                new THREE.Vector2();
-
-
-            /* =========================================
-            Touch / Click
-            ========================================= */
-
-            function handleInteraction(
-                event
-            ) {
-
-                const rect =
-                    canvas.getBoundingClientRect();
-
-
-                let clientX;
-                let clientY;
-
-
-                if (
-                    event.touches &&
-                    event.touches.length
-                ) {
-
-                    clientX =
-                        event.touches[0].clientX;
-
-                    clientY =
-                        event.touches[0].clientY;
-
-                } else {
-
-                    clientX =
-                        event.clientX;
-
-                    clientY =
-                        event.clientY;
-
-                }
-
-
-                mouse.x =
-                    (
-                        clientX -
-                        rect.left
-                    ) /
-                    rect.width *
-                    2 - 1;
-
-
-                mouse.y =
-                    -(
-                        (
-                            clientY -
-                            rect.top
-                        ) /
-                        rect.height
-                    ) *
-                    2 + 1;
-
-
-                raycaster.setFromCamera(
-                    mouse,
-                    camera
-                );
-
-
-                const objects =
-                    raycaster.intersectObjects(
-                        character.children,
-                        true
-                    );
-
-
-                if (
-                    objects.length > 0
-                ) {
-
-                    jump();
-
-                }
 
             }
 
 
-            canvas.addEventListener(
-                "click",
-                handleInteraction
+            window.addEventListener(
+                "resize",
+                resizeCanvas
             );
 
 
-            canvas.addEventListener(
-                "touchend",
-                handleInteraction
-            );
+            /*
+            =========================================
+            Detect Face
+            =========================================
+            */
+
+            let lastVideoTime = -1;
 
 
-            /* =========================================
-            Jump
-            ========================================= */
+            function detectFace() {
 
-            function jump() {
-
-                if (jumping) {
+                if (!running) {
                     return;
                 }
 
 
-                jumping = true;
+                if (
+                    video.readyState >= 2 &&
+                    video.currentTime !== lastVideoTime
+                ) {
 
-                jumpStart =
-                    performance.now();
-
-
-                score++;
-
-                scoreElement.textContent =
-                    score;
-
-            }
+                    lastVideoTime =
+                        video.currentTime;
 
 
-            /* =========================================
-            Animation
-            ========================================= */
+                    const result =
+                        faceLandmarker.detectForVideo(
 
-            function animate(
-                currentTime
-            ) {
+                            video,
 
-                requestAnimationFrame(
-                    animate
-                );
+                            performance.now()
 
-
-                /*
-                    Idle animation
-                */
-
-                if (!jumping) {
-
-                    character.position.y =
-                        -0.7 +
-                        Math.sin(
-                            currentTime *
-                            0.002
-                        ) *
-                        0.04;
-
-                }
-
-
-                /*
-                    Jump animation
-                */
-
-                if (jumping) {
-
-                    const elapsed =
-                        currentTime -
-                        jumpStart;
-
-
-                    const duration =
-                        650;
-
-
-                    const progress =
-                        Math.min(
-                            elapsed /
-                            duration,
-                            1
                         );
 
 
-                    character.position.y =
-                        -0.7 +
-                        Math.sin(
-                            progress *
-                            Math.PI
-                        ) *
-                        1.0;
-
-
-                    character.rotation.y =
-                        progress *
-                        Math.PI *
-                        2;
-
-
-                    if (
-                        progress >= 1
-                    ) {
-
-                        jumping = false;
-
-                        character.position.y =
-                            -0.7;
-
-                        character.rotation.y =
-                            0;
-
-                    }
+                    drawAR(result);
 
                 }
 
 
-                /*
-                    Small rotation
-                */
-
-                if (!jumping) {
-
-                    character.rotation.y =
-                        Math.sin(
-                            currentTime *
-                            0.001
-                        ) *
-                        0.1;
-
-                }
-
-
-                renderer.render(
-                    scene,
-                    camera
+                requestAnimationFrame(
+                    detectFace
                 );
 
             }
 
 
-            animate();
+            /*
+            =========================================
+            Draw AR
+            =========================================
+            */
+
+            function drawAR(result) {
+
+                ctx.clearRect(
+                    0,
+                    0,
+                    window.innerWidth,
+                    window.innerHeight
+                );
 
 
-            /* =========================================
-            Start AR
-            ========================================= */
+                if (
+                    !result.faceLandmarks ||
+                    result.faceLandmarks.length === 0
+                ) {
 
-            async function startAR() {
+                    status.textContent =
+                        "📷 Face not found";
 
-                await startCamera();
+                    return;
 
-                startScreen.style.display =
-                    "none";
+                }
+
+
+                status.textContent =
+                    "✨ Face detected!";
+
+
+                const face =
+                    result.faceLandmarks[0];
+
+
+                /*
+                -------------------------------------
+                Get points
+                -------------------------------------
+                */
+
+                const forehead =
+                    face[10];
+
+
+                const leftCheek =
+                    face[234];
+
+
+                const rightCheek =
+                    face[454];
+
+
+                /*
+                -------------------------------------
+                Convert coordinates
+                -------------------------------------
+                */
+
+                const foreheadPoint =
+                    getPoint(
+                        forehead
+                    );
+
+
+                const leftCheekPoint =
+                    getPoint(
+                        leftCheek
+                    );
+
+
+                const rightCheekPoint =
+                    getPoint(
+                        rightCheek
+                    );
+
+
+                /*
+                -------------------------------------
+                Face width
+                -------------------------------------
+                */
+
+                const faceWidth =
+                    Math.abs(
+                        rightCheekPoint.x -
+                        leftCheekPoint.x
+                    );
+
+
+                /*
+                -------------------------------------
+                Draw bow
+                -------------------------------------
+                */
+
+                drawBow(
+
+                    foreheadPoint.x,
+
+                    foreheadPoint.y -
+
+                    faceWidth * 0.45,
+
+                    faceWidth * 0.55
+
+                );
+
+
+                /*
+                -------------------------------------
+                Draw cheeks
+                -------------------------------------
+                */
+
+                drawCheek(
+
+                    leftCheekPoint.x,
+
+                    leftCheekPoint.y,
+
+                    faceWidth * 0.14
+
+                );
+
+
+                drawCheek(
+
+                    rightCheekPoint.x,
+
+                    rightCheekPoint.y,
+
+                    faceWidth * 0.14
+
+                );
 
             }
 
 
-            /* =========================================
-            Resize
-            ========================================= */
+            /*
+            =========================================
+            Coordinate
+            =========================================
+            */
 
-            window.addEventListener(
-                "resize",
-                () => {
+            function getPoint(point) {
 
-                    camera.aspect =
-                        window.innerWidth /
-                        window.innerHeight;
+                return {
 
-                    camera.updateProjectionMatrix();
-
-
-                    renderer.setSize(
+                    x:
+                        (1 - point.x) *
                         window.innerWidth,
-                        window.innerHeight
-                    );
 
-                }
-            );
+                    y:
+                        point.y *
+                        window.innerHeight
+
+                };
+
+            }
+
+
+            /*
+            =========================================
+            Bow
+            =========================================
+            */
+
+            function drawBow(
+                x,
+                y,
+                size
+            ) {
+
+                ctx.save();
+
+
+                /*
+                Left
+                */
+
+                ctx.beginPath();
+
+                ctx.ellipse(
+
+                    x - size * 0.32,
+
+                    y,
+
+                    size * 0.32,
+
+                    size * 0.22,
+
+                    -0.3,
+
+                    0,
+
+                    Math.PI * 2
+
+                );
+
+                ctx.fillStyle =
+                    "#ff9fba";
+
+                ctx.fill();
+
+
+                /*
+                Right
+                */
+
+                ctx.beginPath();
+
+                ctx.ellipse(
+
+                    x + size * 0.32,
+
+                    y,
+
+                    size * 0.32,
+
+                    size * 0.22,
+
+                    0.3,
+
+                    0,
+
+                    Math.PI * 2
+
+                );
+
+                ctx.fill();
+
+
+                /*
+                Middle
+                */
+
+                ctx.beginPath();
+
+                ctx.arc(
+
+                    x,
+
+                    y,
+
+                    size * 0.13,
+
+                    0,
+
+                    Math.PI * 2
+
+                );
+
+                ctx.fillStyle =
+                    "#ff6f9d";
+
+                ctx.fill();
+
+
+                ctx.restore();
+
+            }
+
+
+            /*
+            =========================================
+            Cheek
+            =========================================
+            */
+
+            function drawCheek(
+                x,
+                y,
+                size
+            ) {
+
+                ctx.save();
+
+
+                ctx.globalAlpha =
+                    0.55;
+
+
+                ctx.fillStyle =
+                    "#ff9fba";
+
+
+                ctx.beginPath();
+
+                ctx.ellipse(
+
+                    x,
+
+                    y,
+
+                    size,
+
+                    size * 0.45,
+
+                    0,
+
+                    0,
+
+                    Math.PI * 2
+
+                );
+
+
+                ctx.fill();
+
+
+                ctx.restore();
+
+            }
 
         </script>
     </body>
