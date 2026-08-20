@@ -1,0 +1,393 @@
+<style>
+  .col-sm-4{
+    width:30%
+  }
+
+  .col-sm-6{
+    width: 50%
+  }
+
+  .navbar{
+    display: none;
+  }
+
+  .table{
+    font-size:calc(12px + 1.8vw);
+    font-weight: bold;
+    height:100%;
+    width:100%; 
+    position: absolute; 
+    top: 0; 
+    bottom: 0; 
+    left: 0; 
+    right: 0;
+    border:1px solid;
+    height:100vh;
+  }
+
+  .counter_container{
+    color: black;
+    background-color: #f3f3f3;
+    font-weight: bold;
+    height:100%;
+    width:100%; 
+    position: absolute; 
+    top: 0; 
+    bottom: 0; 
+    left: 0; 
+    right: 0;
+    height:100vh;
+    display: flex;
+    align-items: center; 
+    justify-content: center;
+    font-weight: bold;
+  }
+
+
+  .counter{
+    font-size:calc(12px + 2.5vw);
+    color:white;
+    height: 30%;
+    margin-bottom: 3%;
+    margin-top:3%;
+    background-color: #C5202E;
+    border-radius:3px;
+    padding:0px 20px 0px 40px;
+    text-align: center
+  }
+
+  .left-colm{
+    height: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center
+  }
+
+  .left-colm div{
+    width:50%;
+  }
+
+  .col-sm-6{
+    height:100vh;
+    display: flex;
+    align-items: center; 
+    justify-content: center;
+    text-align:center;
+    letter-spacing: 3px
+  }
+
+  .tick_num_lab{
+    color:#333;
+    /*font-size:50px;*/
+    font-size:calc(12px + 2vw);
+  }
+
+  .tick_num_val{
+    /*font-size:250px;*/
+    font-size:calc(12px + 14vw);
+    color:#C5202E; 
+    line-height: 1.8
+  }
+
+  .content_1{
+    color:#333;
+    /*font-size:50px;*/
+    font-size:calc(12px + 2vw);
+    line-height: 1.5
+  }
+
+  .content_2{
+    display: flex; 
+    align-items:end; 
+    justify-content: center;
+    line-height: 1.5;
+    color:#C5202E
+  }
+
+  .content_2 .text_1{
+    /*font-size:80px;*/
+    font-size:calc(12px + 3.5vw);
+  }
+
+  .content_2 .text_2{
+    /*font-size:100px;*/
+    font-size:calc(12px + 5vw);
+    margin-bottom:-10px;
+    margin-left:40px
+  }
+
+</style>
+
+<div>
+  <div class="row">
+    <div class="counter_container">
+      <div class="col-sm-4" id="left_colm" style="height: 100vh;">
+        <div class="counter">
+              <div class="left-colm">
+                  <div class="text-left">Ticket</div>
+                  <div>0002</div>
+              </div>
+              <div class="left-colm">
+                  <div class="text-left">Counter</div>
+                  <div>2</div>
+              </div>
+        </div>
+
+          <div class="counter">
+              <div class="left-colm">
+                  <div class="text-left">Ticket </div>
+                  <div>-</div>
+              </div>
+              <div class="left-colm">
+                  <div class="text-left">Counter</div>
+                  <div>-</div>
+              </div>
+          </div>
+
+            <div class="counter">
+              <div class="left-colm">
+                  <div class="text-left">Ticket </div>
+                  <div>-</div>
+              </div>
+              <div class="left-colm">
+                  <div class="text-left">Counter</div>
+                  <div>-</div>
+              </div>
+          </div>
+
+      </div>
+
+      <div class="col-sm-6" id="right_colm">
+
+        <div>
+          <div class="tick_num_lab">Ticket Number</div>
+          <div class="tick_num_val">-</div>
+
+          <div class="content_1">Please Proceed To </div>
+          <div class="content_2">
+            <div class="text_1">Counter</div>
+            <div class="text_2">-</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="https://www.gstatic.com/firebasejs/9.14.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.14.0/firebase-messaging-compat.js"></script>
+
+<script type="text/javascript">
+
+  // $(document).ready(function (){
+    const firebaseConfig = {
+      apiKey: "AIzaSyBKCuEi0dsDv886i8_k8USXhcuDBmZjU4Q",
+      authDomain: "my-pgm-branch-notificati-26d51.firebaseapp.com",
+      projectId: "my-pgm-branch-notificati-26d51",
+      storageBucket: "my-pgm-branch-notificati-26d51.appspot.com",
+      messagingSenderId: "973926023596",
+      appId: "1:973926023596:web:5b0a6f342d1293ac2ffa09"
+    };
+
+    const app = firebase.initializeApp(firebaseConfig);
+    
+    if('serviceWorker' in navigator){
+      const messaging = firebase.messaging();
+
+      messaging.getToken({ vapidKey: "BHSEE2_PyKdZBv-NqsBHc0IAtdk7Am0V1TX9O0ih2LFCuRfNyOU2j5MV_3zJbfHY1bWV6eEGmUREfoo-1ss2Z9o" }).then((currentToken) => {
+        sendTokenToServer(currentToken)
+      }).catch((err) => {
+        // setTokenSentToServer(false)
+      })
+
+      messaging.onMessage((payload) => {
+        updateWaitingList(payload);
+      })
+    } else{
+      console.log("service Worker no function")
+    }
+
+    function sendTokenToServer(token){
+      $.ajax({
+        url: 'index.php?route=qms/ticket/saveBranchDeviceToken',
+        method: 'POST',
+        data: {
+           token: token
+        },
+        success: function(response) {},
+        error: function(xhr, status, error) {
+          // Handle error (if needed)
+        }
+      });
+    }    
+
+    async function updateWaitingList(content) {
+      try {
+        const response = await $.ajax({
+          url: 'index.php?route=qms/ticket/waitingList',
+          method: 'POST',
+          data: {
+            refresh: '1'
+          }
+        });
+
+        if (response && response.data) {
+          var speech = '';
+          var audio = new Audio('assets/counter_ringtone.mp3');
+
+          var latestTicket = response.data.latest_ticket;
+          var pendingTickets = response.data.pending_tickets;
+
+          console.log("content stuff ", JSON.stringify(content));
+          console.log("response stuff ", JSON.stringify(response));
+
+          // latest ticket
+          if ((latestTicket !== undefined && latestTicket !== null) && (parseInt(latestTicket.ticket_number) == parseInt(content.data.action_code))){
+            $('#right_colm').empty();
+            $('#right_colm').append(
+              `<div>
+                <div class="tick_num_lab">Ticket Number</div>
+                <div class="tick_num_val">` + latestTicket.ticket_number + `</div>
+
+                <div class="content_1">Please Proceed To </div>
+                <div class="content_2">
+                  <div class="text_1">Counter</div>
+                  <div class="text_2">` + latestTicket.counter_id + `</div>
+                </div>
+              </div>`
+            );
+
+            if (latestTicket.ticket_number !== '-') {
+              speech += content.notification.body;
+            }
+          }
+          // end latest ticket
+
+          // pending tickets
+          if((pendingTickets !== undefined && pendingTickets !== null) && pendingTickets.length > 0){
+            $('#left_colm').empty();
+
+            if(pendingTickets.length == 3){
+              $.each(pendingTickets, function(index, item){
+                var counterID = item.counter_id;
+                var ticketNumber = item.ticket_number;
+
+                $('#left_colm').append(
+                  `<div class="counter">
+                      <div class="left-colm">
+                        <div class="text-left">Ticket</div>
+                        <div>` + ticketNumber + `</div>
+                      </div>
+                      <div class="left-colm">
+                        <div class="text-left">Counter</div>
+                        <div>` + counterID + `</div>
+                      </div>
+                    </div>`
+                );
+              });
+            }else if(pendingTickets.length < 3){
+              // append the actual pending tickets
+              $.each(pendingTickets, function(index, item) {
+                var counterID = item.counter_id;
+                var ticketNumber = item.ticket_number;
+
+                $('#left_colm').append(
+                  `<div class="counter">
+                      <div class="left-colm">
+                        <div class="text-left">Ticket</div>
+                        <div>` + ticketNumber + `</div>
+                      </div>
+                      <div class="left-colm">
+                        <div class="text-left">Counter</div>
+                        <div>` + counterID + `</div>
+                      </div>
+                    </div>`
+                );
+              });
+
+              // append the placeholder for the remaining slots
+              for(var i = pendingTickets.length; i < 3; i++){
+                $('#left_colm').append(
+                `<div class="counter">
+                    <div class="left-colm">
+                        <div class="text-left">Ticket</div>
+                        <div>-</div>
+                    </div>
+                    <div class="left-colm">
+                        <div class="text-left">Counter</div>
+                        <div>-</div>
+                    </div>
+                </div>`
+              );
+              }
+            }
+          }
+
+          if (speech) {
+            audio.play().catch(function(error) {
+              // Handle error (if needed)
+            });
+            audio.addEventListener('ended', function() {
+              textToSpeech(speech);
+              textToSpeech(speech);
+            }, false);
+          }
+        }else{
+          $('#left_colm').empty();
+          for(var i = 0; i < 3; i++){
+            $('#left_colm').append(
+              `<div class="counter">
+                  <div class="left-colm">
+                      <div class="text-left">Ticket</div>
+                      <div>-</div>
+                  </div>
+                  <div class="left-colm">
+                      <div class="text-left">Counter</div>
+                      <div>-</div>
+                  </div>
+              </div>`
+            );
+          }
+
+          $('#right_colm').empty();
+          $('#right_colm').append(
+            `<div>
+              <div class="tick_num_lab">Ticket Number</div>
+              <div class="tick_num_val">-</div>
+
+              <div class="content_1">Please Proceed To </div>
+              <div class="content_2">
+                <div class="text_1">Counter</div>
+                <div class="text_2">-</div>
+              </div>
+            </div>`
+          );
+        }
+      } catch (error) {
+        // Handle error (if needed)
+        console.error(error);
+      }
+    }
+
+    let synth = window.speechSynthesis;
+    let microsoftZiraVoice = '';
+    speechSynthesis.onvoiceschanged = function () {
+      let voices = window.speechSynthesis.getVoices();
+      microsoftZiraVoice = voices.find(voice => voice.name === "Microsoft Zira - English (United States)" && voice.lang === "en-US");
+    };
+
+    function textToSpeech(text){
+      let speech = new SpeechSynthesisUtterance(text);
+      // Set the rate to make the speech slower
+      speech.rate = 0.8;
+
+      if(microsoftZiraVoice){
+        speech.voice = microsoftZiraVoice;
+      }
+
+      speechSynthesis.speak(speech);
+
+      speech.onend = function() {
+        // Handle error (if needed)
+      };
+    }
+</script>
