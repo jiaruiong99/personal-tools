@@ -180,12 +180,12 @@
 
   // $(document).ready(function (){
     const firebaseConfig = {
-      apiKey: "AIzaSyBKCuEi0dsDv886i8_k8USXhcuDBmZjU4Q",
-      authDomain: "my-pgm-branch-notificati-26d51.firebaseapp.com",
-      projectId: "my-pgm-branch-notificati-26d51",
-      storageBucket: "my-pgm-branch-notificati-26d51.appspot.com",
-      messagingSenderId: "973926023596",
-      appId: "1:973926023596:web:5b0a6f342d1293ac2ffa09"
+      apiKey: "",
+      authDomain: "",
+      projectId: "",
+      storageBucket: "",
+      messagingSenderId: "",
+      appId: ""
     };
 
     const app = firebase.initializeApp(firebaseConfig);
@@ -193,7 +193,7 @@
     if('serviceWorker' in navigator){
       const messaging = firebase.messaging();
 
-      messaging.getToken({ vapidKey: "BHSEE2_PyKdZBv-NqsBHc0IAtdk7Am0V1TX9O0ih2LFCuRfNyOU2j5MV_3zJbfHY1bWV6eEGmUREfoo-1ss2Z9o" }).then((currentToken) => {
+      messaging.getToken({ vapidKey: "" }).then((currentToken) => {
         sendTokenToServer(currentToken)
       }).catch((err) => {
         // setTokenSentToServer(false)
